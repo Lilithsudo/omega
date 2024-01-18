@@ -1,139 +1,32 @@
 trigger:
-- master
+- main
 
-pool: MyAgentPool
-pipeline:
-  agent: 
-    any: true
-  tools:
-    maven: "maven3.9"
-  environment:
-    DOCKERHUB_CREDENTIALS: credentials('DockerHub')
-  stages:
-    - stage: Mise à jour de infrastructure AWS
-      steps:
-        - sshagent:
-            credentials: 
-              - master
-            script: |
-              ssh ec2-user@ec2-13-39-198-209.eu-west-3.compute.amazonaws.com << ENDSSH
-              free -h && sudo sysctl vm.drop_caches=3 && free -h
-              rm -rf terraform
-              git clone https://github.com/goldentechnologyrec/terraform
-              cd terraform
-              sed -i '11s|default = ""|default = "AKIAYBFAQKZOHH5YJ37G"|' terraform.tf
-              sed -i '17s|default = ""|default = "nQcCT+uR2+3Z/iZsG5VpReYLPhU8bQvesxX0ikIg"|' terraform.tf
-              terraform init
-              terraform apply --auto-approve
-              ENDSSH
+pool:
+  name: 'MyAgentPool' # Utilise votre agent pool personnalisé.
 
-    - stage: Build soft backend
-      steps:
-        - sshagent:
-            credentials: 
-              - omegaBackend
-            script: |
-              ssh ec2-user@ec2-15-237-155-59.eu-west-3.compute.amazonaws.com << ENDSSH
-              free -h && sudo sysctl vm.drop_caches=3 && free -h
-              rm -rf omega
-              git clone https://github.com/goldentechnologyrec/omega.git
-              cd omega/docker/docker-compose/backend/
-              docker-compose stop postgres node_exporter
-              docker-compose build postgres node_exporter
-              docker-compose up -d postgres node_exporter
-              free -h && sudo sysctl vm.drop_caches=3 && free -h
-              ENDSSH
+steps:
+- checkout: self
+- checkout: git://Lilithsudo/terraform_azure
+- script: |
+    echo "Installer Terraform"
+    curl -sL https://raw.githubusercontent.com/terraform-linters/tflint/master/install_linux.sh | bash
+  displayName: 'Installer Terraform'
 
-    - stage: Build soft frontend
-      steps:
-        - sshagent:
-            credentials: 
-              - omegaFrontend
-            script: |
-              ssh ec2-user@ec2-15-237-3-23.eu-west-3.compute.amazonaws.com << ENDSSH
-              rm -rf omega
-              git clone https://github.com/goldentechnologyrec/omega.git
-              free -h && sudo sysctl vm.drop_caches=3 && free -h
-              cd omega/docker/docker-compose/frontend/
-              docker-compose stop node_exporter
-              docker-compose build node_exporter
-              docker-compose up -d node_exporter
-              free -h && sudo sysctl vm.drop_caches=3 && free -h
-              ENDSSH
+- script: |
+    echo "Initialiser Terraform"
+    terraform init
+  workingDirectory: $(Build.SourcesDirectory)/terraform_azure
+  displayName: 'Initialiser Terraform'
 
-    - stage: Build Maven app omega
-      steps:
-        - sshagent:
-            credentials: 
-              - master
-            script: |
-              ssh ec2-user@ec2-13-39-198-209.eu-west-3.compute.amazonaws.com << ENDSSH
-              rm -rf omega
-              git clone https://github.com/goldentechnologyrec/omega.git
-              free -h && sudo sysctl vm.drop_caches=3 && free -h
-              cd omega/ihm-omega
-              mvn -Dmaven.test.failure.ignore=true package
-              free -h && sudo sysctl vm.drop_caches=3 && free -h
-              cd ../consulterOmega
-              mvn -Dmaven.test.failure.ignore=true package
-              free -h && sudo sysctl vm.drop_caches=3 && free -h
-              ENDSSH
+- script: |
+    echo "Planifier Terraform"
+    terraform plan -out=tfplan
+  workingDirectory: $(Build.SourcesDirectory)/terraform_azure
+  displayName: 'Planifier Terraform'
 
-    - stage: Run container app
-      steps:
-        - sshagent:
-            credentials: 
-              - master
-            script: |
-              ssh ec2-user@ec2-13-39-198-209.eu-west-3.compute.amazonaws.com << ENDSSH
-              free -h && sudo sysctl vm.drop_caches=3 && free -h
-              cd omega/docker/docker-compose/master
-              docker-compose stop ihm-omega consulter_omega
-              docker-compose build ihm-omega consulter_omega
-              docker-compose up -d ihm-omega consulter_omega
-              free -h && sudo sysctl vm.drop_caches=3 && free -h
-              ENDSSH
-
-    - stage: Test container
-      steps:
-        - sshagent:
-            credentials: 
-              - master
-            script: |
-              ssh ec2-user@ec2-13-39-198-209.eu-west-3.compute.amazonaws.com << ENDSSH
-              ls -l
-              # Placez ici vos commandes de test pour les conteneurs
-              ENDSSH
-
-    - stage: Clean container
-      steps:
-        - sshagent:
-            credentials: 
-              - master
-            script: |
-              ssh ec2-user@ec2-13-39-198-209.eu-west-3.compute.amazonaws.com << ENDSSH
-              cd omega/docker/docker-compose/master
-              docker-compose stop ihm-omega consulter_omega
-              docker-compose rm -f ihm-omega consulter_omega
-              free -h && sudo sysctl vm.drop_caches=3 && free -h
-              ENDSSH
-
-    - stage: Push images app dockerhub
-      steps:
-        - sshagent:
-            credentials: 
-              - master
-            script: |
-              ssh ec2-user@ec2-13-39-198-209.eu-west-3.compute.amazonaws.com << ENDSSH
-              free -h && sudo sysctl vm.drop_caches=3 && free -h
-              cd omega/ihm-omega/
-              docker build -t goldenrec/ihm-omega:latest .
-              cd ../consulterOmega/
-              docker build -t goldenrec/consulterOmega:latest .
-              echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin
-              docker push goldenrec/ihm-omega:latest
-              docker push goldenrec/consulter-omega:latest
-              docker logout
-              free -h && sudo sysctl vm.drop_caches=3 && free -h
-              ENDSSH
+- script: |
+    echo "Appliquer Terraform"
+    terraform apply -auto-approve tfplan
+  workingDirectory: $(Build.SourcesDirectory)/terraform_azure
+  displayName: 'Appliquer Terraform'
 

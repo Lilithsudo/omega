@@ -4,21 +4,23 @@ trigger:
 pool:
   name: 'MyAgentPool'
 
-resources:
-  repositories:
-  - repository: terraform_azure
-    type: github
-    name: Lilithsudo/terraform_azure
-    endpoint: Lilithsudo
-
 steps:
 - checkout: self
 - checkout: terraform_azure
   persistCredentials: true
 
 - script: |
-    echo "Installer Terraform"
-    curl -sL https://raw.githubusercontent.com/terraform-linters/tflint/master/install_linux.sh | bash
+    echo "Vérifier si Terraform est installé"
+    if ! command -v terraform &> /dev/null
+    then
+        echo "Terraform n'est pas installé. Installation en cours..."
+        wget https://releases.hashicorp.com/terraform/1.0.0/terraform_1.0.0_linux_amd64.zip
+        unzip terraform_1.0.0_linux_amd64.zip
+        sudo mv terraform /usr/local/bin/
+    else
+        echo "Terraform est déjà installé."
+    fi
+    terraform version
   displayName: 'Installer Terraform'
 
 - script: |

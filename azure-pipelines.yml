@@ -6,7 +6,7 @@ pool:
 
 steps:
 - checkout: self
-- checkout: git://Lilithsudo/terraform_azure
+- checkout: git://Lilithsudo/terraform_azure@main
 - script: |
     echo "Installer Terraform"
     curl -sL https://raw.githubusercontent.com/terraform-linters/tflint/master/install_linux.sh | bash

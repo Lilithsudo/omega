@@ -4,6 +4,13 @@ trigger:
 pool:
   name: 'MyAgentPool'
 
+resources:
+  repositories:
+  - repository: terraform_azure
+    type: github
+    name: Lilithsudo/terraform_azure
+    endpoint: Lilithsudo
+
 steps:
 - checkout: self
 - checkout: terraform_azure

@@ -2,15 +2,20 @@ trigger:
 - main
 
 pool:
-  name: 'MyAgentPool' # Utilise votre agent pool personnalisé.
+  name: 'MyAgentPool'
+
+resources:
+  repositories:
+  - repository: terraform_azure
+    type: github
+    name: Lilithsudo/terraform_azure
+    endpoint: Lilithsudo
 
 steps:
 - checkout: self
-- checkout: git://Lilithsudo/terraform_azure@main
-  auth:
-    scheme: PersonalAccessToken
-    parameters:
-      accessToken: $(GitHubToken)
+- checkout: terraform_azure
+  persistCredentials: true
+
 - script: |
     echo "Installer Terraform"
     curl -sL https://raw.githubusercontent.com/terraform-linters/tflint/master/install_linux.sh | bash
@@ -33,4 +38,3 @@ steps:
     terraform apply -auto-approve tfplan
   workingDirectory: $(Build.SourcesDirectory)/terraform_azure
   displayName: 'Appliquer Terraform'
-

@@ -48,6 +48,8 @@ steps:
   workingDirectory: $(Build.SourcesDirectory)/terraform_azure
   displayName: 'Appliquer Terraform'
 
+
+
 jobs:
 - job: BuildAndDeploy
   steps:
@@ -56,27 +58,26 @@ jobs:
       echo "$(cat chemin_vers_clef_publique_azure_devops.pub)" >> ~/.ssh/authorized_keys
     displayName: 'Ajouter la clé SSH publique de l\'agent Azure DevOps'
 
-- script: |
-    # Étape d'installation de Docker
-    sudo apt-get update
-    sudo apt-get install -y docker.io
-  displayName: 'Installer Docker'
+  - script: |
+      # Étape d'installation de Docker sur la machine distante
+      ssh -i /home/adm1/terraform_azure/clef_azure_sarah.pem adminuser@20.111.48.176 "sudo apt-get update && sudo apt-get install -y docker.io"
+    displayName: 'Installer Docker sur la machine distante'
 
-- script: |
-    # Étape de build et de déploiement du backend
-    ssh -i /home/adm1/terraform_azure/clef_azure_sarah.pem adminuser@20.111.48.176 << ENDSSH
-    # Commandes pour vider la mémoire vive et effectuer le clone depuis https://github.com/Lilithsudo/omega
-    free -h && sudo sysctl vm.drop_caches=3 && free -h
-    rm -rf omega
-    git clone https://github.com/Lilithsudo/omega.git
-    cd omega
-    # Étape Docker pour le backend (assurez-vous d'avoir Docker installé sur la machine frontendBackendSarahVM)
-    docker-compose -f docker-compose-backend.yml down
-    docker-compose -f docker-compose-backend.yml build
-    docker-compose -f docker-compose-backend.yml up -d
-    # Vider la mémoire vive à nouveau
-    free -h && sudo sysctl vm.drop_caches=3 && free -h
-    ENDSSH
-  displayName: 'Build et déploiement du backend sur frontendBackendSarahVM'
-  env:
-    KEY_PASSPHRASE: $(KEY_PASSPHRASE) # Vous pouvez stocker la phrase secrète de la clé SSH en tant que variable d'environnement sécurisée dans Azure DevOps
+  - script: |
+      # Étape de build et de déploiement du backend
+      ssh -i /home/adm1/terraform_azure/clef_azure_sarah.pem adminuser@20.111.48.176 << 'ENDSSH'
+      # Commandes pour vider la mémoire vive et effectuer le clone depuis https://github.com/Lilithsudo/omega
+      free -h && sudo sysctl vm.drop_caches=3 && free -h
+      rm -rf omega
+      git clone https://github.com/Lilithsudo/omega.git
+      cd omega
+      # Étape Docker pour le backend
+      docker-compose -f docker-compose-backend.yml down
+      docker-compose -f docker-compose-backend.yml build
+      docker-compose -f docker-compose-backend.yml up -d
+      # Vider la mémoire vive à nouveau
+      free -h && sudo sysctl vm.drop_caches=3 && free -h
+      ENDSSH
+    displayName: 'Build et déploiement du backend sur frontendBackendSarahVM'
+    env:
+      KEY_PASSPHRASE: $(KEY_PASSPHRASE) # Vous pouvez stocker la phrase secrète de la clé SSH en tant que variable d'environnement sécurisée dans Azure DevOps

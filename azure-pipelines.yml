@@ -4,6 +4,9 @@ trigger:
 pool:
   name: 'MyAgentPool'
 
+variables:
+- group: SSHKeys
+
 resources:
   repositories:
   - repository: terraform_azure
@@ -54,30 +57,34 @@ jobs:
 - job: BuildAndDeploy
   steps:
   - script: |
-      # Étape d'ajout de la clé SSH publique de l'agent Azure DevOps à la liste des clés autorisées sur la machine frontendBackendSarahVM
-      echo "$(cat chemin_vers_clef_publique_azure_devops.pub)" >> ~/.ssh/authorized_keys
-    displayName: 'Ajouter la clé SSH publique de l\'agent Azure DevOps'
+      # Ajout de la clé SSH dans un fichier temporaire
+      echo "$(SSH_PRIVATE_KEY)" > temp_ssh_key
+      chmod 600 temp_ssh_key
+
+      # Étape d'ajout de la clé SSH publique à la machine distante (si nécessaire)
+      ssh -i temp_ssh_key adminuser@20.111.48.176 "echo 'public_key_content' >> ~/.ssh/authorized_keys"
+    displayName: 'Préparer la clé SSH'
 
   - script: |
       # Étape d'installation de Docker sur la machine distante
-      ssh -i /home/adm1/terraform_azure/clef_azure_sarah.pem adminuser@20.111.48.176 "sudo apt-get update && sudo apt-get install -y docker.io"
+      ssh -i temp_ssh_key adminuser@20.111.48.176 "sudo apt-get update && sudo apt-get install -y docker.io"
     displayName: 'Installer Docker sur la machine distante'
 
   - script: |
       # Étape de build et de déploiement du backend
-      ssh -i /home/adm1/terraform_azure/clef_azure_sarah.pem adminuser@20.111.48.176 << 'ENDSSH'
-      # Commandes pour vider la mémoire vive et effectuer le clone depuis https://github.com/Lilithsudo/omega
+      ssh -i temp_ssh_key adminuser@20.111.48.176 << 'ENDSSH'
+      # Commandes pour vider la mémoire vive et cloner le dépôt
       free -h && sudo sysctl vm.drop_caches=3 && free -h
       rm -rf omega
       git clone https://github.com/Lilithsudo/omega.git
       cd omega
-      # Étape Docker pour le backend
+      # Commandes Docker pour le backend
       docker-compose -f docker-compose-backend.yml down
       docker-compose -f docker-compose-backend.yml build
       docker-compose -f docker-compose-backend.yml up -d
       # Vider la mémoire vive à nouveau
       free -h && sudo sysctl vm.drop_caches=3 && free -h
       ENDSSH
-    displayName: 'Build et déploiement du backend sur frontendBackendSarahVM'
+    displayName: 'Build et déploiement du backend sur la machine distante'
     env:
-      KEY_PASSPHRASE: $(KEY_PASSPHRASE) # Vous pouvez stocker la phrase secrète de la clé SSH en tant que variable d'environnement sécurisée dans Azure DevOps
+      SSH_PRIVATE_KEY: $(SSH_PRIVATE_KEY)

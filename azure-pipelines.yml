@@ -4,6 +4,8 @@ trigger:
 pool:
   name: 'MyAgentPool'
 
+variables:
+- group: SSHKeys
 
 resources:
   repositories:
@@ -62,6 +64,6 @@ jobs:
       # Ajout de la clé SSH dans un fichier temporaire
       echo "$SSH_PRIVATE_KEY" > temp_ssh_key
       chmod 600 temp_ssh_key
-      # Utilisation de la clé SSH comme d'habitude
-      ssh -o StrictHostKeyChecking=no -i temp_ssh_key adminuser@20.111.48.176 "votre_commande"
-    displayName: 'Utiliser la clé SSH depuis les secrets'
+      # Ajout de la clé SSH publique à la machine distante
+      ssh -o StrictHostKeyChecking=no -i temp_ssh_key adminuser@20.111.48.176 "echo 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQCb8BXYzZZ8dEUiazKiXjXO/+Noh3yXWOw6R1p/gykCnUBGLp47MAVLSpgVtawrn1TOD0DumoidXbOr7t0uSov8b2T6ll1Iq5j+SscIu34tbG14VG84P6Uncn+njP0mmV2S5gVdjvUdSvkJjyOtsLedDxkuB3YKde3dp2l3LldV5uFY9uU+hk7rXZm9db2wi/QRWJGad7avY7T8HgkU5ar24CkZEazzD7vbuKmiqmibhDvtbVTzl71/pzQnpkE2EXQPuasua+FUG5Ci1IE2n6wjILnBKx7KmeuY3uVJGSJFbAQYr7nmg8UPZNpxZ8VrEn6xoVHNzQaQJbwAO2t5T5h7Gm4f+tXudu8AE7stJXao/MDl6vBBMl3EIoqtO1HaKW+5BNmNJ1z5x7Rc1FW5pDUiVQWOlrUhBLYMsGW5/fbQYWVAr/eZNESI7UB+SOBFvZznRVZLY3yAMWFDDsKT48nzMaHbk68xnjFo7I+TSJ+S7MGvB/w19opArIlCWkV8apo2wBgciUFuyyeZ6PuZECggVKlw4vXemxRYS4ScNoC/0T6MGf1FrBajEOEPin2dYpPFuQiZuRIohYE8aTUrQiSUs5q3FmM4z4X5150Ebym2uuf/BOmcJiYskck9ZFSGcAAjSIZBV8HisN4WKFtlQFKXDCvfhT0IxtkbPAdwiMVLlw== sarah95bayed@gmail.com' >> ~/.ssh/authorized_keys"
+    displayName: 'Préparer la clé SSH'

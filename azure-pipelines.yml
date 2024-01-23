@@ -14,53 +14,51 @@ resources:
     name: Lilithsudo/terraform_azure
     endpoint: Lilithsudo
 
-steps:
-- checkout: self
-- checkout: terraform_azure
-  persistCredentials: true
-
-- script: |
-    echo "Vérifier si Terraform est installé"
-    if ! command -v terraform &> /dev/null
-    then
-        echo "Terraform n'est pas installé. Installation en cours..."
-        wget https://releases.hashicorp.com/terraform/1.0.0/terraform_1.0.0_linux_amd64.zip
-        unzip terraform_1.0.0_linux_amd64.zip
-        sudo mv terraform /usr/local/bin/
-    else
-        echo "Terraform est déjà installé."
-    fi
-    terraform version
-  displayName: 'Installer Terraform'
-
-- script: |
-    echo "Initialiser Terraform"
-    terraform init
-  workingDirectory: $(Build.SourcesDirectory)/terraform_azure
-  displayName: 'Initialiser Terraform'
-
-- script: |
-    echo "Planifier Terraform"
-    terraform plan -out=tfplan
-  workingDirectory: $(Build.SourcesDirectory)/terraform_azure
-  displayName: 'Planifier Terraform'
-
-- script: |
-    echo "Appliquer Terraform"
-    terraform apply -auto-approve tfplan
-  workingDirectory: $(Build.SourcesDirectory)/terraform_azure
-  displayName: 'Appliquer Terraform'
-
-
-
 jobs:
+- job: Terraform
+  steps:
+  - checkout: self
+  - checkout: terraform_azure
+    persistCredentials: true
+
+  - script: |
+      echo "Vérifier si Terraform est installé"
+      if ! command -v terraform &> /dev/null
+      then
+          echo "Terraform n'est pas installé. Installation en cours..."
+          wget https://releases.hashicorp.com/terraform/1.0.0/terraform_1.0.0_linux_amd64.zip
+          unzip terraform_1.0.0_linux_amd64.zip
+          sudo mv terraform /usr/local/bin/
+      else
+          echo "Terraform est déjà installé."
+      fi
+      terraform version
+    displayName: 'Installer Terraform'
+
+  - script: |
+      echo "Initialiser Terraform"
+      terraform init
+    workingDirectory: $(Build.SourcesDirectory)/terraform_azure
+    displayName: 'Initialiser Terraform'
+
+  - script: |
+      echo "Planifier Terraform"
+      terraform plan -out=tfplan
+    workingDirectory: $(Build.SourcesDirectory)/terraform_azure
+    displayName: 'Planifier Terraform'
+
+  - script: |
+      echo "Appliquer Terraform"
+      terraform apply -auto-approve tfplan
+    workingDirectory: $(Build.SourcesDirectory)/terraform_azure
+    displayName: 'Appliquer Terraform'
+
 - job: BuildAndDeploy
   steps:
   - script: |
       # Ajout de la clé SSH dans un fichier temporaire
       echo "$(SSH_PRIVATE_KEY)" > temp_ssh_key
       chmod 600 temp_ssh_key
-
       # Étape d'ajout de la clé SSH publique à la machine distante (si nécessaire)
       ssh -i temp_ssh_key adminuser@20.111.48.176 "echo 'public_key_content' >> ~/.ssh/authorized_keys"
     displayName: 'Préparer la clé SSH'

@@ -14,6 +14,7 @@ resources:
     name: Lilithsudo/terraform_azure
     endpoint: Lilithsudo
 
+
 jobs:
 - job: Terraform
   steps:
@@ -55,6 +56,11 @@ jobs:
 
 - job: BuildAndDeploy
   steps:
+  - script: |
+    echo "Test de la variable SSH_PRIVATE_KEY"
+    echo "$(SSH_PRIVATE_KEY)" | wc -c
+  displayName: 'Test de la variable SSH_PRIVATE_KEY'
+
   - script: |
       # Ajout de la clé SSH dans un fichier temporaire
       echo "$(SSH_PRIVATE_KEY)" > temp_ssh_key

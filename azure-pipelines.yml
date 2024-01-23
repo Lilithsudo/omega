@@ -4,8 +4,6 @@ trigger:
 pool:
   name: 'MyAgentPool'
 
-variables:
-  # Vous n'avez plus besoin de définir la variable SSH_PRIVATE_KEY ici
 
 resources:
   repositories:

@@ -98,3 +98,35 @@ jobs:
       free -h && sudo sysctl vm.drop_caches=3 && free -h
       ENDSSH
     displayName: "Construire lapplication Maven sur la machine distante"
+
+- job: ManageContainers
+  pool:
+    name: 'MyAgentPool'
+  steps:
+    - script: |
+      ssh -o StrictHostKeyChecking=no -i $(Agent.ToolsDirectory)/ssh/id_rsa adminuser@20.111.48.176 << 'ENDSSH'
+      # Vider la mémoire vive et gérer les conteneurs
+      free -h && sudo sysctl vm.drop_caches=3 && free -h
+      cd omega/docker/docker-compose/master
+      docker-compose stop ihm-omega consulter_omega
+      docker-compose build ihm-omega consulter_omega
+      docker-compose up -d ihm-omega consulter_omega
+      free -h && sudo sysctl vm.drop_caches=3 && free -h
+      ENDSSH
+    displayName: 'Run container app'
+
+  - script: |
+      ssh -o StrictHostKeyChecking=no -i $(Agent.ToolsDirectory)/ssh/id_rsa adminuser@20.111.48.176 << 'ENDSSH'
+      ls -l
+      # Ajoutez ici vos commandes de test des conteneurs
+      ENDSSH
+    displayName: 'Test container'
+
+  - script: |
+      ssh -o StrictHostKeyChecking=no -i $(Agent.ToolsDirectory)/ssh/id_rsa adminuser@20.111.48.176 << 'ENDSSH'
+      cd omega/docker/docker-compose/master
+      docker-compose stop ihm-omega consulter_omega
+      docker-compose rm -f ihm-omega consulter_omega
+      free -h && sudo sysctl vm.drop_caches=3 && free -h
+      ENDSSH
+    displayName: 'Clean container'

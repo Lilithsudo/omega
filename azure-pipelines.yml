@@ -103,7 +103,7 @@ jobs:
   pool:
     name: 'MyAgentPool'
   steps:
-    - script: |
+  - script: |
       ssh -o StrictHostKeyChecking=no -i $(Agent.ToolsDirectory)/ssh/id_rsa adminuser@20.111.48.176 'bash -s' << 'ENDSSH'
       # Vider la mémoire vive et gérer les conteneurs
       free -h && sudo sysctl vm.drop_caches=3 && free -h
@@ -114,6 +114,7 @@ jobs:
       free -h && sudo sysctl vm.drop_caches=3 && free -h
       ENDSSH
     displayName: 'Run container app'
+
 
   - script: |
       ssh -o StrictHostKeyChecking=no -i $(Agent.ToolsDirectory)/ssh/id_rsa adminuser@20.111.48.176 'bash -s' << 'ENDSSH'

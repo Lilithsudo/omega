@@ -6,6 +6,7 @@ pool:
 
 variables:
 - group: SSHKeys
+- group: DockerHubCredentials
 
 resources:
   repositories:
@@ -133,5 +134,21 @@ jobs:
       free -h && sudo sysctl vm.drop_caches=3 && free -h
       ENDSSH
     displayName: 'Clean container'
+  - script: |
+      ssh -o StrictHostKeyChecking=no -i $(Agent.ToolsDirectory)/ssh/id_rsa adminuser@20.111.48.176 'bash -s' << 'ENDSSH'
+      # Instructions pour la construction et le déploiement des images Docker
+      free -h && sudo sysctl vm.drop_caches=3 && free -h
+      cd omega/ihm-omega/
+      docker build -t lilithsudo/ihm-omega:latest .
+      cd ../consulterOmega/
+      docker build -t lilithsudo/consulterOmega:latest .
+      echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin
+      docker push lilithsudo/ihm-omega:latest
+      docker push lilithsudo/consulter-omega:latest
+      docker logout
+      free -h && sudo sysctl vm.drop_caches=3 && free -h
+      ENDSSH
+    displayName: 'Push images app dockerhub'
+
 
     

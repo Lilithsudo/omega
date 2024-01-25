@@ -7,6 +7,7 @@ pool:
 variables:
 - group: SSHKeys
 - group: DockerHubCredentials
+- group: GitHubToken
 
 resources:
   repositories:
@@ -145,12 +146,14 @@ jobs:
       free -h && sudo sysctl vm.drop_caches=3 && free -h
       cd omega/ihm-omega/
       docker build -t lilithsudo/ihm-omega:latest .
-      cd ../consulterOmega/
-      docker build -t lilithsudo/consulterOmega:latest .
-      echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin
+      cd ../consulteromega/  # Assurez-vous que le nom du dossier est correct
+      docker build -t lilithsudo/consulteromega:latest .  # Assurez-vous que le nom de l'image est en minuscules
+      echo $(tokenlilithsudo) | docker login docker.pkg.github.com -u Lilithsudo --password-stdin
       docker push lilithsudo/ihm-omega:latest
-      docker push lilithsudo/consulter-omega:latest
+      docker push lilithsudo/consulteromega:latest
       docker logout
       free -h && sudo sysctl vm.drop_caches=3 && free -h
       ENDSSH
     displayName: 'Push images app dockerhub'
+
+

@@ -64,17 +64,19 @@ jobs:
 
   - script: |
       # Utiliser la clé SSH à partir de l'agent pool
-      ssh -o StrictHostKeyChecking=no -i $(Agent.ToolsDirectory)/ssh/id_rsa adminuser@20.111.48.176 "echo 'ssh-rsa VOTRE_CLÉ_PUBLIQUE' >> ~/.ssh/authorized_keys"
+      ssh -o StrictHostKeyChecking=no -i /home/adm1/.ssh/id_rsa adminuser@20.111.48.176 "echo 'ssh-rsa VOTRE_CLÉ_PUBLIQUE' >> ~/.ssh/authorized_keys"
     displayName: 'Préparer la clé SSH'
 
   - script: |
       # Installation de Docker sur la machine distante
-      ssh -o StrictHostKeyChecking=no -i $(Agent.ToolsDirectory)/ssh/id_rsa adminuser@20.111.48.176 "sudo apt-get update && sudo apt-get install -y docker.io"
+      ssh -o StrictHostKeyChecking=no -i /home/adm1/.ssh/id_rsa adminuser@20.111.48.176 "sudo apt-get update && sudo apt-get install -y docker.io"
+    displayName: 'Installer Docker sur la machine distante'
     displayName: 'Installer Docker sur la machine distante'
 
   - script: |
       # Build et déploiement du backend
-      ssh -o StrictHostKeyChecking=no -i $(Agent.ToolsDirectory)/ssh/id_rsa adminuser@20.111.48.176 << 'ENDSSH'
+      ssh -o StrictHostKeyChecking=no -i /home/adm1/.ssh/id_rsa adminuser@20.111.48.176 << 'ENDSSH'
+    # Commandes pour vider la mémoire vive et cloner le dépôt
       # Commandes pour vider la mémoire vive et cloner le dépôt
       free -h && sudo sysctl vm.drop_caches=3 && free -h
       rm -rf omega
@@ -91,7 +93,8 @@ jobs:
   
   - script: |
       # Construire l'application Maven sur la machine distante
-      ssh -o StrictHostKeyChecking=no -i $(Agent.ToolsDirectory)/ssh/id_rsa adminuser@20.111.48.176 << 'ENDSSH'
+      ssh -o StrictHostKeyChecking=no -i /home/adm1/.ssh/id_rsa adminuser@20.111.48.176 << 'ENDSSH'
+    # Commandes pour vider la mémoire vive et cloner le dépôt
       # Commandes pour construire l'application Maven
       free -h && sudo sysctl vm.drop_caches=3 && free -h
       cd omega/ihm-omega
@@ -106,7 +109,8 @@ jobs:
     name: 'MyAgentPool'
   steps:
   - script: |
-      ssh -o StrictHostKeyChecking=no -i $(Agent.ToolsDirectory)/ssh/id_rsa adminuser@20.111.48.176 'bash -s' << 'ENDSSH'
+      ssh -o StrictHostKeyChecking=no -i /home/adm1/.ssh/id_rsa adminuser@20.111.48.176 << 'ENDSSH'
+    # Commandes pour vider la mémoire vive et cloner le dépôt
       # Vider la mémoire vive et gérer les conteneurs
       free -h && sudo sysctl vm.drop_caches=3 && free -h
       cd omega/docker/docker-compose/master
@@ -119,7 +123,8 @@ jobs:
 
 
   - script: |
-      ssh -o StrictHostKeyChecking=no -i $(Agent.ToolsDirectory)/ssh/id_rsa adminuser@20.111.48.176 'bash -s' << 'ENDSSH'
+      ssh -o StrictHostKeyChecking=no -i /home/adm1/.ssh/id_rsa adminuser@20.111.48.176 << 'ENDSSH'
+    # Commandes pour vider la mémoire vive et cloner le dépôt
       # Commandes pour tester les conteneurs
       ls -l
       # Ajoutez ici vos commandes de test des conteneurs
@@ -127,7 +132,8 @@ jobs:
     displayName: 'Test container'
 
   - script: |
-      ssh -o StrictHostKeyChecking=no -i $(Agent.ToolsDirectory)/ssh/id_rsa adminuser@20.111.48.176 'bash -s' << 'ENDSSH'
+      ssh -o StrictHostKeyChecking=no -i /home/adm1/.ssh/id_rsa adminuser@20.111.48.176 << 'ENDSSH'
+    # Commandes pour vider la mémoire vive et cloner le dépôt
       # Nettoyage des conteneurs
       cd omega/docker/docker-compose/master
       docker-compose stop ihm-omega consulter_omega
@@ -141,7 +147,8 @@ jobs:
     name: 'MyAgentPool'
   steps:
   - script: |
-      ssh -o StrictHostKeyChecking=no -i $(Agent.ToolsDirectory)/ssh/id_rsa adminuser@20.111.48.176 'bash -s' << 'ENDSSH'
+      ssh -o StrictHostKeyChecking=no -i /home/adm1/.ssh/id_rsa adminuser@20.111.48.176 << 'ENDSSH'
+    # Commandes pour vider la mémoire vive et cloner le dépôt
       # Instructions pour la construction et le déploiement des images Docker
       free -h && sudo sysctl vm.drop_caches=3 && free -h
       cd omega/ihm-omega/

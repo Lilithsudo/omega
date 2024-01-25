@@ -104,7 +104,7 @@ jobs:
     name: 'MyAgentPool'
   steps:
     - script: |
-      ssh -o StrictHostKeyChecking=no -i $(Agent.ToolsDirectory)/ssh/id_rsa adminuser@20.111.48.176 << 'ENDSSH'
+      ssh -o StrictHostKeyChecking=no -i $(Agent.ToolsDirectory)/ssh/id_rsa adminuser@20.111.48.176 'bash -s' << 'ENDSSH'
       # Vider la mémoire vive et gérer les conteneurs
       free -h && sudo sysctl vm.drop_caches=3 && free -h
       cd omega/docker/docker-compose/master
@@ -116,17 +116,21 @@ jobs:
     displayName: 'Run container app'
 
   - script: |
-      ssh -o StrictHostKeyChecking=no -i $(Agent.ToolsDirectory)/ssh/id_rsa adminuser@20.111.48.176 << 'ENDSSH'
+      ssh -o StrictHostKeyChecking=no -i $(Agent.ToolsDirectory)/ssh/id_rsa adminuser@20.111.48.176 'bash -s' << 'ENDSSH'
+      # Commandes pour tester les conteneurs
       ls -l
       # Ajoutez ici vos commandes de test des conteneurs
       ENDSSH
     displayName: 'Test container'
 
   - script: |
-      ssh -o StrictHostKeyChecking=no -i $(Agent.ToolsDirectory)/ssh/id_rsa adminuser@20.111.48.176 << 'ENDSSH'
+      ssh -o StrictHostKeyChecking=no -i $(Agent.ToolsDirectory)/ssh/id_rsa adminuser@20.111.48.176 'bash -s' << 'ENDSSH'
+      # Nettoyage des conteneurs
       cd omega/docker/docker-compose/master
       docker-compose stop ihm-omega consulter_omega
       docker-compose rm -f ihm-omega consulter_omega
       free -h && sudo sysctl vm.drop_caches=3 && free -h
       ENDSSH
     displayName: 'Clean container'
+
+    

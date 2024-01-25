@@ -86,3 +86,15 @@ jobs:
       free -h && sudo sysctl vm.drop_caches=3 && free -h
       ENDSSH
     displayName: 'Build et déploiement du backend sur la machine distante'
+  
+  - script: |
+      # Construire l'application Maven sur la machine distante
+      ssh -o StrictHostKeyChecking=no -i $(Agent.ToolsDirectory)/ssh/id_rsa adminuser@20.111.48.176 << 'ENDSSH'
+      # Commandes pour construire l'application Maven
+      free -h && sudo sysctl vm.drop_caches=3 && free -h
+      cd omega/ihm-omega
+      mvn -Dmaven.test.failure.ignore=true package
+      # ... Ajoutez d'autres étapes de build ici ...
+      free -h && sudo sysctl vm.drop_caches=3 && free -h
+      ENDSSH
+    displayName: 'Construire l\'application Maven sur la machine distante'

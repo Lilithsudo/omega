@@ -97,4 +97,4 @@ jobs:
       # ... Ajoutez d'autres étapes de build ici ...
       free -h && sudo sysctl vm.drop_caches=3 && free -h
       ENDSSH
-    displayName: 'Construire lapplication Maven sur la machine distante'
+    displayName: "Construire lapplication Maven sur la machine distante"

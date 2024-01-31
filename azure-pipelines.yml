@@ -153,7 +153,7 @@ jobs:
       free -h && sudo sysctl vm.drop_caches=3 && free -h
       cd omega/ihm-omega/
       docker build -t lilithsudo/ihm-omega:latest .
-      cd ../consulteromega/  # Assurez-vous que le nom du dossier est correct
+      cd consulterOmega/  
       docker build -t lilithsudo/consulteromega:latest .  # Assurez-vous que le nom de l'image est en minuscules
       echo $(tokenlilithsudo) | docker login docker.pkg.github.com -u Lilithsudo --password-stdin
       docker push lilithsudo/ihm-omega:latest

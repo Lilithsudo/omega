@@ -76,20 +76,26 @@ jobs:
       EOF
     displayName: 'Installer Java 17 sur la machine distante'
   - script: |
-      echo "Clonage du projet et build des applications avec Maven..."
       ssh adminuser@20.111.48.176 << 'EOF'
-      # Cleanup before cloning
+      sudo apt-get update
+      sudo apt-get install -y docker.io maven
+    # Cleanup before cloning
       rm -rf omega || true
       git clone https://github.com/Lilithsudo/omega.git
-      # Building projects with Maven
       cd omega
-      for module in ihm-omega ajouterOmega consulterOmega modifierOmega supprimerOmega; do
-        cd \$module
-        mvn clean package -DskipTests -Dmaven.compiler.source=11 -Dmaven.compiler.target=11
-        cd ..
+      modules=("ihm-omega" "ajouterOmega" "consulterOmega" "modifierOmega" "supprimerOmega")
+      for module in "\${modules[@]}"; do
+        if [ -d "\$module" ]; then
+          cd "\$module"
+          mvn clean package -DskipTests -Dmaven.compiler.source=11 -Dmaven.compiler.target=11
+          cd ..
+        else
+          echo "Le répertoire \$module n'existe pas."
+        fi
       done
       EOF
     displayName: 'Build Maven pour chaque module'
+
   - script: |
       echo "Construction et déploiement des conteneurs Docker..."
       ssh adminuser@20.111.48.176 << 'EOF'

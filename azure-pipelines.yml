@@ -55,110 +55,61 @@ jobs:
     workingDirectory: $(Build.SourcesDirectory)/terraform_azure
     displayName: 'Appliquer Terraform'
 
+jobs:
 - job: BuildAndDeploy
-  dependsOn: Terraform
+  pool:
+    vmImage: 'ubuntu-latest'
   steps:
   - script: |
-      echo "Test de la variable SSH_PRIVATE_KEY"
-      echo "$(SSH_PRIVATE_KEY)" | wc -c
-    displayName: 'Test de la variable SSH_PRIVATE_KEY'
+      echo "Installation de Docker et Maven sur la machine distante..."
+      ssh adminuser@20.111.48.176 << 'EOF'
+      sudo apt-get update
+      sudo apt-get install -y docker.io maven
+      EOF
+    displayName: 'Installer les dépendances sur la machine distante'
 
   - script: |
-      # Utiliser la clé SSH à partir de l'agent pool
-      ssh -o StrictHostKeyChecking=no -i /home/adm1/.ssh/id_rsa adminuser@20.111.48.176 "echo 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQCb8BXYzZZ8dEUiazKiXjXO/+Noh3yXWOw6R1p/gykCnUBGLp47MAVLSpgVtawrn1TOD0DumoidXbOr7t0uSov8b2T6ll1Iq5j+SscIu34tbG14VG84P6Uncn+njP0mmV2S5gVdjvUdSvkJjyOtsLedDxkuB3YKde3dp2l3LldV5uFY9uU+hk7rXZm9db2wi/QRWJGad7avY7T8HgkU5ar24CkZEazzD7vbuKmiqmibhDvtbVTzl71/pzQnpkE2EXQPuasua+FUG5Ci1IE2n6wjILnBKx7KmeuY3uVJGSJFbAQYr7nmg8UPZNpxZ8VrEn6xoVHNzQaQJbwAO2t5T5h7Gm4f+tXudu8AE7stJXao/MDl6vBBMl3EIoqtO1HaKW+5BNmNJ1z5x7Rc1FW5pDUiVQWOlrUhBLYMsGW5/fbQYWVAr/eZNESI7UB+SOBFvZznRVZLY3yAMWFDDsKT48nzMaHbk68xnjFo7I+TSJ+S7MGvB/w19opArIlCWkV8apo2wBgciUFuyyeZ6PuZECggVKlw4vXemxRYS4ScNoC/0T6MGf1FrBajEOEPin2dYpPFuQiZuRIohYE8aTUrQiSUs5q3FmM4z4X5150Ebym2uuf/BOmcJiYskck9ZFSGcAAjSIZBV8HisN4WKFtlQFKXDCvfhT0IxtkbPAdwiMVLlw== sarah95bayed@gmail.com' >> ~/.ssh/authorized_keys"
-    displayName: 'Préparer la clé SSH'
-
-  - script: |
-      # Installation de Docker sur la machine distante
-      ssh -o StrictHostKeyChecking=no -i /home/adm1/.ssh/id_rsa adminuser@20.111.48.176 "sudo apt-get update && sudo apt-get install -y docker.io"
-    displayName: 'Installer Docker sur la machine distante'
-
-  - script: |
-      # Build et déploiement du backend
-      ssh -o StrictHostKeyChecking=no -i /home/adm1/.ssh/id_rsa adminuser@20.111.48.176 << 'ENDSSH'
-      # Commandes pour vider la mémoire vive et cloner le dépôt
-      free -h && sudo sysctl vm.drop_caches=3 && free -h
-      rm -rf omega
+      echo "Clonage du projet et build des applications avec Maven..."
+      ssh adminuser@20.111.48.176 << 'EOF'
       git clone https://github.com/Lilithsudo/omega.git
-      cd omega
-      # Commandes Docker pour le backend
-      docker-compose -f docker-compose-backend.yml down
-      docker-compose -f docker-compose-backend.yml build
-      docker-compose -f docker-compose-backend.yml up -d
-      # Vider la mémoire vive à nouveau
-      free -h && sudo sysctl vm.drop_caches=3 && free -h
-      ENDSSH
-    displayName: 'Build et déploiement du backend sur la machine distante'
-
-  - script: |
-      # Installer Maven sur la machine distante
-      ssh -o StrictHostKeyChecking=no -i /home/adm1/.ssh/id_rsa adminuser@20.111.48.176 "sudo apt-get update && sudo apt-get install -y maven"
-    displayName: 'Installer Maven'
-
-  - script: |
-      # Construire l'application Maven sur la machine distante
-      ssh -o StrictHostKeyChecking=no -i /home/adm1/.ssh/id_rsa adminuser@20.111.48.176 << 'ENDSSH'
-      # Commandes pour construire l'application Maven
-      free -h && sudo sysctl vm.drop_caches=3 && free -h
       cd omega/ihm-omega
-      mvn -Dmaven.test.failure.ignore=true package
-      # ... Ajoutez d'autres étapes de build ici ...
-      free -h && sudo sysctl vm.drop_caches=3 && free -h
-      ENDSSH
-    displayName: "Construire l'application Maven sur la machine distante"
-
-- job: ManageContainers
-  dependsOn: BuildAndDeploy
-  pool:
-    name: 'MyAgentPool'
-  steps:
-  - script: |
-      ssh -o StrictHostKeyChecking=no -i /home/adm1/.ssh/id_rsa adminuser@20.111.48.176 << 'ENDSSH'
-      # Vider la mémoire vive et gérer les conteneurs
-      free -h && sudo sysctl vm.drop_caches=3 && free -h
-      cd omega/docker/docker-compose/master
-      docker-compose stop ihm-omega consulter_omega
-      docker-compose build ihm-omega consulter_omega
-      docker-compose up -d ihm-omega consulter_omega
-      free -h && sudo sysctl vm.drop_caches=3 && free -h
-      ENDSSH
-    displayName: 'Run container app'
+      mvn clean package -DskipTests
+      cd ../ajouterOmega
+      mvn clean package -DskipTests
+      cd ../consulterOmega
+      mvn clean package -DskipTests
+      cd ../modifierOmega
+      mvn clean package -DskipTests
+      cd ../supprimerOmega
+      mvn clean package -DskipTests
+      EOF
+    displayName: 'Build Maven pour chaque module'
 
   - script: |
-      ssh -o StrictHostKeyChecking=no -i /home/adm1/.ssh/id_rsa adminuser@20.111.48.176 << 'ENDSSH'
-      # Commandes pour tester les conteneurs
-      ls -l
-      # Ajoutez ici vos commandes de test des conteneurs
-      ENDSSH
-    displayName: 'Test container'
-
-  - script: |
-      ssh -o StrictHostKeyChecking=no -i /home/adm1/.ssh/id_rsa adminuser@20.111.48.176 << 'ENDSSH'
-      # Nettoyage des conteneurs
-      cd omega/docker/docker-compose/master
-      docker-compose stop ihm-omega consulter_omega
-      docker-compose rm -f ihm-omega consulter_omega
-      free -h && sudo sysctl vm.drop_caches=3 && free -h
-      ENDSSH
-    displayName: 'Clean container'
-
-- job: PushDockerImages
-  dependsOn: ManageContainers
-  pool:
-    name: 'MyAgentPool'
-  steps:
-  - script: |
-      ssh -o StrictHostKeyChecking=no -i /home/adm1/.ssh/id_rsa adminuser@20.111.48.176 << 'ENDSSH'
-      # Instructions pour la construction et le déploiement des images Docker
-      free -h && sudo sysctl vm.drop_caches=3 && free -h
-      cd omega/ihm-omega/
+      echo "Construction et déploiement des conteneurs Docker..."
+      ssh adminuser@20.111.48.176 << 'EOF'
+      cd omega/ihm-omega
       docker build -t lilithsudo/ihm-omega:latest .
-      cd consulterOmega/  
-      docker build -t lilithsudo/consulteromega:latest .  # Assurez-vous que le nom de l'image est en minuscules
-      echo $(tokenlilithsudo) | docker login docker.pkg.github.com -u Lilithsudo --password-stdin
+      cd ../ajouterOmega
+      docker build -t lilithsudo/ajouteromega:latest .
+      cd ../consulterOmega
+      docker build -t lilithsudo/consulteromega:latest .
+      cd ../modifierOmega
+      docker build -t lilithsudo/modifieromega:latest .
+      cd ../supprimerOmega
+      docker build -t lilithsudo/supprimeromega:latest .
+      EOF
+    displayName: 'Construction des images Docker pour chaque module'
+
+  - script: |
+      echo "Push des images Docker vers Docker Hub..."
+      ssh adminuser@20.111.48.176 << 'EOF'
+      echo "$(DOCKERHUB_PASSWORD)" | docker login -u "$(DOCKERHUB_USERNAME)" --password-stdin
       docker push lilithsudo/ihm-omega:latest
+      docker push lilithsudo/ajouteromega:latest
       docker push lilithsudo/consulteromega:latest
+      docker push lilithsudo/modifieromega:latest
+      docker push lilithsudo/supprimeromega:latest
       docker logout
-      free -h && sudo sysctl vm.drop_caches=3 && free -h
-      ENDSSH
-    displayName: 'Push images app dockerhub'
+      EOF
+    displayName: 'Push des images Docker'

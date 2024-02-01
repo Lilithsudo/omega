@@ -56,6 +56,7 @@ jobs:
     displayName: 'Appliquer Terraform'
 
 - job: BuildAndDeploy
+  dependsOn: Terraform
   steps:
   - script: |
       echo "Installation de Docker et Maven sur la machine distante..."
@@ -120,3 +121,4 @@ jobs:
       docker logout
       EOF
     displayName: 'Push des images Docker'
+

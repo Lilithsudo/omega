@@ -55,7 +55,7 @@ jobs:
     workingDirectory: $(Build.SourcesDirectory)/terraform_azure
     displayName: 'Appliquer Terraform'
 
-jobs:
+
 - job: BuildAndDeploy
   pool:
     vmImage: 'ubuntu-latest'

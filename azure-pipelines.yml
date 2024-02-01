@@ -59,7 +59,7 @@ jobs:
   steps:
   - script: |
       echo "Installation de Docker et Maven sur la machine distante..."
-      ssh adminuser@20.111.48.176 << 'EOF'
+      ssh adminuser@20.111.48.176 << "EOF"
       sudo apt-get update
       sudo apt-get install -y docker.io maven
       EOF
@@ -67,7 +67,7 @@ jobs:
 
   - script: |
       echo "Installation de Java 17..."
-      ssh adminuser@20.111.48.176 << 'EOF'
+      ssh adminuser@20.111.48.176 << "EOF"
       sudo apt-get update
       sudo apt-get install -y openjdk-17-jdk
       echo "export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64" >> ~/.bashrc
@@ -78,7 +78,7 @@ jobs:
     displayName: 'Installer Java 17 sur la machine distante'
 
   - script: |
-      ssh adminuser@20.111.48.176 << 'EOF'
+      ssh adminuser@20.111.48.176 << "EOF"
       sudo apt-get update
       sudo apt-get install -y docker.io maven
       # Cleanup before cloning
@@ -100,7 +100,7 @@ jobs:
 
   - script: |
       echo "Construction et déploiement des conteneurs Docker..."
-      ssh adminuser@20.111.48.176 << 'EOF'
+      ssh adminuser@20.111.48.176 << "EOF"
       cd omega
       for module in ihm-omega ajouterOmega consulterOmega modifierOmega supprimerOmega; do
         cd "\$module"
@@ -112,7 +112,7 @@ jobs:
 
   - script: |
       echo "Push des images Docker vers Docker Hub..."
-      ssh adminuser@20.111.48.176 << 'EOF'
+      ssh adminuser@20.111.48.176 << "EOF"
       echo "$(DOCKERHUB_PASSWORD)" | docker login -u "$(DOCKERHUB_USERNAME)" --password-stdin
       for module in ihm-omega ajouterOmega consulterOmega modifierOmega supprimerOmega; do
         docker push lilithsudo/\$module:latest

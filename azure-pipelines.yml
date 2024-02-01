@@ -73,15 +73,15 @@ jobs:
       ssh adminuser@20.111.48.176 << 'EOF'
       git clone https://github.com/Lilithsudo/omega.git
       cd omega/ihm-omega
-      mvn clean package -DskipTests
+      mvn clean package -DskipTests -Dmaven.compiler.source=11 -Dmaven.compiler.target=11
       cd ../ajouterOmega
-      mvn clean package -DskipTests
+      mvn clean package -DskipTests -Dmaven.compiler.source=11 -Dmaven.compiler.target=11
       cd ../consulterOmega
-      mvn clean package -DskipTests
+      mvn clean package -DskipTests -Dmaven.compiler.source=11 -Dmaven.compiler.target=11
       cd ../modifierOmega
-      mvn clean package -DskipTests
+      mvn clean package -DskipTests -Dmaven.compiler.source=11 -Dmaven.compiler.target=11
       cd ../supprimerOmega
-      mvn clean package -DskipTests
+      mvn clean package -DskipTests -Dmaven.compiler.source=11 -Dmaven.compiler.target=11
       EOF
     displayName: 'Build Maven pour chaque module'
 

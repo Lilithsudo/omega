@@ -57,8 +57,8 @@ jobs:
 
 
 - job: BuildAndDeploy
-  pool:
-    vmImage: 'ubuntu-latest'
+  
+  
   steps:
   - script: |
       echo "Installation de Docker et Maven sur la machine distante..."

@@ -55,10 +55,7 @@ jobs:
     workingDirectory: $(Build.SourcesDirectory)/terraform_azure
     displayName: 'Appliquer Terraform'
 
-
 - job: BuildAndDeploy
-  
-  
   steps:
   - script: |
       echo "Installation de Docker et Maven sur la machine distante..."
@@ -72,54 +69,46 @@ jobs:
       ssh adminuser@20.111.48.176 << 'EOF'
       sudo apt-get update
       sudo apt-get install -y openjdk-17-jdk
-      export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
-      export PATH=$JAVA_HOME/bin:$PATH
+      echo "export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64" >> ~/.bashrc
+      echo "export PATH=\$JAVA_HOME/bin:\$PATH" >> ~/.bashrc
+      source ~/.bashrc
       java -version
       EOF
     displayName: 'Installer Java 17 sur la machine distante'
-
   - script: |
       echo "Clonage du projet et build des applications avec Maven..."
       ssh adminuser@20.111.48.176 << 'EOF'
+      # Cleanup before cloning
+      rm -rf omega || true
       git clone https://github.com/Lilithsudo/omega.git
-      cd omega/ihm-omega
-      mvn clean package -DskipTests -Dmaven.compiler.source=11 -Dmaven.compiler.target=11
-      cd ../ajouterOmega
-      mvn clean package -DskipTests -Dmaven.compiler.source=11 -Dmaven.compiler.target=11
-      cd ../consulterOmega
-      mvn clean package -DskipTests -Dmaven.compiler.source=11 -Dmaven.compiler.target=11
-      cd ../modifierOmega
-      mvn clean package -DskipTests -Dmaven.compiler.source=11 -Dmaven.compiler.target=11
-      cd ../supprimerOmega
-      mvn clean package -DskipTests -Dmaven.compiler.source=11 -Dmaven.compiler.target=11
+      # Building projects with Maven
+      cd omega
+      for module in ihm-omega ajouterOmega consulterOmega modifierOmega supprimerOmega; do
+        cd \$module
+        mvn clean package -DskipTests -Dmaven.compiler.source=11 -Dmaven.compiler.target=11
+        cd ..
+      done
       EOF
     displayName: 'Build Maven pour chaque module'
-
   - script: |
       echo "Construction et déploiement des conteneurs Docker..."
       ssh adminuser@20.111.48.176 << 'EOF'
-      cd omega/ihm-omega
-      docker build -t lilithsudo/ihm-omega:latest .
-      cd ../ajouterOmega
-      docker build -t lilithsudo/ajouteromega:latest .
-      cd ../consulterOmega
-      docker build -t lilithsudo/consulteromega:latest .
-      cd ../modifierOmega
-      docker build -t lilithsudo/modifieromega:latest .
-      cd ../supprimerOmega
-      docker build -t lilithsudo/supprimeromega:latest .
+      cd omega
+      for module in ihm-omega ajouterOmega consulterOmega modifierOmega supprimerOmega; do
+        cd \$module
+        docker build -t lilithsudo/\$module:latest .
+        cd ..
+      done
       EOF
     displayName: 'Construction des images Docker pour chaque module'
-
   - script: |
       echo "Push des images Docker vers Docker Hub..."
       ssh adminuser@20.111.48.176 << 'EOF'
       echo "$(DOCKERHUB_PASSWORD)" | docker login -u "$(DOCKERHUB_USERNAME)" --password-stdin
-      docker push lilithsudo/ihm-omega:latest
-      docker push lilithsudo/ajouteromega:latest
-      docker push lilithsudo/consulteromega:latest
-      docker push lilithsudo/modifieromega:latest
-      docker push lilithsudo/supprimeromega:latest
+      for module in ihm-omega ajouterOmega consulterOmega modifierOmega supprimerOmega; do
+        docker push lilithsudo/\$module:latest
+      done
       docker logout
       EOF
     displayName: 'Push des images Docker'
+

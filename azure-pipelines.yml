@@ -64,6 +64,7 @@ jobs:
       sudo apt-get install -y docker.io maven
       EOF
     displayName: 'Installer les dépendances sur la machine distante'
+
   - script: |
       echo "Installation de Java 17..."
       ssh adminuser@20.111.48.176 << 'EOF'
@@ -75,11 +76,12 @@ jobs:
       java -version
       EOF
     displayName: 'Installer Java 17 sur la machine distante'
+
   - script: |
       ssh adminuser@20.111.48.176 << 'EOF'
       sudo apt-get update
       sudo apt-get install -y docker.io maven
-    # Cleanup before cloning
+      # Cleanup before cloning
       rm -rf omega || true
       git clone https://github.com/Lilithsudo/omega.git
       cd omega
@@ -101,12 +103,13 @@ jobs:
       ssh adminuser@20.111.48.176 << 'EOF'
       cd omega
       for module in ihm-omega ajouterOmega consulterOmega modifierOmega supprimerOmega; do
-        cd \$module
+        cd "\$module"
         docker build -t lilithsudo/\$module:latest .
         cd ..
       done
       EOF
     displayName: 'Construction des images Docker pour chaque module'
+
   - script: |
       echo "Push des images Docker vers Docker Hub..."
       ssh adminuser@20.111.48.176 << 'EOF'
@@ -117,4 +120,3 @@ jobs:
       docker logout
       EOF
     displayName: 'Push des images Docker'
-

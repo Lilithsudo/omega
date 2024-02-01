@@ -67,6 +67,16 @@ jobs:
       sudo apt-get install -y docker.io maven
       EOF
     displayName: 'Installer les dépendances sur la machine distante'
+  - script: |
+      echo "Installation de Java 17..."
+      ssh adminuser@20.111.48.176 << 'EOF'
+      sudo apt-get update
+      sudo apt-get install -y openjdk-17-jdk
+      export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+      export PATH=$JAVA_HOME/bin:$PATH
+      java -version
+      EOF
+    displayName: 'Installer Java 17 sur la machine distante'
 
   - script: |
       echo "Clonage du projet et build des applications avec Maven..."
